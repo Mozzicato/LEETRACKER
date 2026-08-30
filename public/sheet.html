@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <title>Lit-Sheet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="rail">
+      <div class="rail-top">
+        <div class="mark">L</div>
+        <span class="mark-name">lit-sheet</span>
+      </div>
+
+      <nav class="rail-nav" aria-label="Sections">
+        <button class="rail-btn is-active" data-section="sheet">
+          <span class="rail-icon" aria-hidden="true">▦</span>
+          <span class="rail-label">Sheet</span>
+        </button>
+        <button class="rail-btn rail-btn--urgent" data-section="urgent">
+          <span class="rail-icon" aria-hidden="true">◉</span>
+          <span class="rail-label">Urgent</span>
+          <span class="rail-badge" id="urgent-badge">0</span>
+        </button>
+      </nav>
+
+      <button class="mode" id="mode" aria-label="Your mode"></button>
+
+      <div class="rail-foot">
+        <button class="add-btn" id="add-cheat">+ Add question</button>
+        <div class="rail-account">
+          <span class="rail-email" id="account-email">…</span>
+          <button class="link-btn" id="sign-out" type="button">Sign out</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topline">
+        <div>
+          <h1 id="section-title">Sheet</h1>
+          <p id="section-sub"></p>
+        </div>
+        <button class="primary" id="review-now">Review <b id="review-count">0</b></button>
+      </header>
+
+      <div class="spread-bar" id="spread-bar" aria-hidden="true"></div>
+
+      <div class="controls">
+        <label class="search">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input id="search" type="search" placeholder="Search problems…  ( / )" autocomplete="off">
+        </label>
+        <div class="seg" id="view-toggle" role="group" aria-label="View mode">
+          <button data-view="overview" class="is-active">Overview</button>
+          <button data-view="detailed">Detailed</button>
+        </div>
+        <div class="seg" id="group-toggle" role="group" aria-label="Group by">
+          <button data-group="date" class="is-active">By date</button>
+          <button data-group="pattern">By pattern</button>
+        </div>
+        <div class="seg is-hidden" id="filter-toggle" role="group" aria-label="Filter">
+          <button data-filter="all" class="is-active">All urgent</button>
+          <button data-filter="due">Due today</button>
+          <button data-filter="overdue">Overdue</button>
+          <button data-filter="abandoned">Abandoned</button>
+        </div>
+      </div>
+
+      <div class="legend" id="legend"></div>
+
+      <p class="app-error is-hidden" id="app-error" role="alert"></p>
+      <div id="board"><p class="loading">Loading your sheet…</p></div>
+    </main>
+  </div>
+
+  <div class="drawer-scrim is-hidden" id="detail-drawer" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+    <aside class="drawer">
+      <button class="dismiss" data-close-modal aria-label="Close">×</button>
+      <div id="detail-content"></div>
+    </aside>
+  </div>
+
+  <div class="scrim is-hidden" id="modes-modal" role="dialog" aria-modal="true" aria-labelledby="modes-title">
+    <div class="dialog modes-dialog">
+      <button class="dismiss" data-close-modal aria-label="Close">×</button>
+      <h2 id="modes-title">Modes</h2>
+      <p class="modes-intro">Your mode is earned from how you actually practise — how much you write down, how often you come back to it, how little you abandon, and how much you get vaulted.</p>
+      <div id="modes-content"></div>
+    </div>
+  </div>
+
+  <div class="rank-up is-hidden" id="rank-up-modal" role="dialog" aria-modal="true" aria-labelledby="rank-up-title" aria-describedby="rank-up-message">
+    <div class="rank-up-confetti" aria-hidden="true"></div>
+    <section class="rank-up-card" id="rank-up-card">
+      <span class="rank-up-kicker">New mode unlocked</span>
+      <span class="rank-up-orbit" aria-hidden="true"></span>
+      <p class="rank-up-level" id="rank-up-level">Mode 1</p>
+      <h2 id="rank-up-title">Scribbler</h2>
+      <p id="rank-up-message">Your next chapter starts now.</p>
+      <button class="rank-up-continue" id="rank-up-continue" type="button">Keep going <span aria-hidden="true">→</span></button>
+    </section>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <div class="scrim is-hidden" id="add-modal" role="dialog" aria-modal="true" aria-labelledby="add-title">
+    <div class="dialog">
+      <button class="dismiss" data-close-modal aria-label="Close">×</button>
+      <h2 id="add-title">Add a question</h2>
+      <form id="add-form">
+        <label class="field">Problem
+          <input id="problem-search" required placeholder="Try 206, or reverse linked" autocomplete="off">
+        </label>
+        <div id="problem-results" class="results"></div>
+        <div id="selected-problem" class="chosen is-hidden"></div>
+        <label class="field">Key thing to remember
+          <textarea id="insight-input" required rows="3" placeholder="The observation you would want handed back to you in six weeks"></textarea>
+        </label>
+        <div class="field-pair">
+          <label class="field">Time<input id="time-input" placeholder="O(n)"></label>
+          <label class="field">Space<input id="space-input" placeholder="O(1)"></label>
+        </div>
+        <label class="field">Notes <span class="optional">optional</span>
+          <textarea id="notes-input" rows="2" placeholder="A mistake, an edge case, a wrong turn"></textarea>
+        </label>
+        <button class="primary wide" id="add-submit" type="submit">Save question</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="scrim is-hidden" id="review-modal" role="dialog" aria-modal="true" aria-labelledby="review-title">
+    <div class="dialog">
+      <button class="dismiss" data-close-modal aria-label="Close">×</button>
+      <div class="meter"><span id="review-position">1 / 1</span><span>Recall session</span></div>
+      <div id="review-content"></div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
