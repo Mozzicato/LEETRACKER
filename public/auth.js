@@ -98,8 +98,14 @@ setMode('login');
 const returned = new URLSearchParams(window.location.search).get('error');
 if (returned) {
   showError(returned);
-  window.history.replaceState({}, '', '/login.html');
+  window.history.replaceState({}, '', '/');
 }
+
+/* Already signed in? Skip the form. (The server no longer redirects here,
+   so that local and Vercel behave identically.) */
+fetch('/api/auth/me')
+  .then(response => { if (response.ok) window.location.replace('/sheet.html'); })
+  .catch(() => { /* stay on the form */ });
 
 /* Only offer Google if the server actually has credentials for it. */
 fetch('/api/auth/config')

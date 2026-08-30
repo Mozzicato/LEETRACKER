@@ -47,16 +47,39 @@ redirect URI on the OAuth client, exactly.
 ## Layout
 
 ```
-server.mjs        static files + the whole JSON API
+lib/api.mjs       every /api/* route — the single source of truth
 lib/db.mjs        Neon connection, reads .env.local
 lib/auth.mjs      scrypt passwords, HMAC-signed session cookie
 lib/google.mjs    OAuth authorization-code flow
 lib/catalogue.mjs problem list + demo sheet, served at /api/problems
-public/           login page and the app itself
+server.mjs        local dev only: static files + delegates to lib/api.mjs
+api/[...path].mjs Vercel entry point: delegates to lib/api.mjs
+public/           login page (index.html) and the app (sheet.html)
 db/schema.sql     applied by `npm run db:migrate` (idempotent)
 ```
 
-One runtime dependency: `@neondatabase/serverless`.
+One runtime dependency: `@neondatabase/serverless`. There is no build step.
+
+## Deploying to Vercel
+
+`public/` is served as static files and `api/[...path].mjs` becomes a serverless
+function, so the same `lib/api.mjs` runs locally and in production.
+
+1. Import the repo at **vercel.com/new**.
+2. Add environment variables (Settings → Environment Variables):
+   `DATABASE_URL`, `AUTH_SECRET`, and optionally `GOOGLE_CLIENT_ID` /
+   `GOOGLE_CLIENT_SECRET`.
+3. Deploy, then set `APP_URL` to the domain Vercel gives you
+   (e.g. `https://leetracker.vercel.app`) and redeploy — Google's redirect URI
+   is built from it.
+4. For Google sign-in, add `https://your-domain/api/auth/google/callback` to the
+   OAuth client's authorised redirect URIs. Google matches it exactly.
+
+The schema lives in Neon, so there is nothing to migrate at deploy time. Run
+`npm run db:migrate` locally whenever `db/schema.sql` changes.
+
+Session cookies gain the `Secure` flag automatically when `VERCEL` is set or
+`APP_URL` starts with `https:`.
 
 ## Security notes
 

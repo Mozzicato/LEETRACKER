@@ -62,7 +62,7 @@ async function api(path, options = {}) {
     body: options.body ? JSON.stringify(options.body) : undefined
   });
 
-  if (response.status === 401) { window.location.href = '/login.html'; throw new Error('Signed out.'); }
+  if (response.status === 401) { window.location.href = '/'; throw new Error('Signed out.'); }
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || 'Something went wrong.');
@@ -632,7 +632,7 @@ $('#problem-search').addEventListener('input', event => renderProblemResults(eve
 
 $('#sign-out').addEventListener('click', async () => {
   await fetch('/api/auth/logout', { method: 'POST' });
-  window.location.href = '/login.html';
+  window.location.href = '/';
 });
 
 $('#add-form').addEventListener('submit', async event => {
