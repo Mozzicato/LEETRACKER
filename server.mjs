@@ -160,7 +160,8 @@ const server = createServer(async (request, response) => {
         });
         return response.end();
       } catch (problem) {
-        console.error('Google sign-in failed:', problem);
+        /* `expected` marks a refusal we chose, not a fault worth logging. */
+        if (!problem.expected) console.error('Google sign-in failed:', problem);
         return fail(problem.message || 'Google sign-in failed.');
       }
     }
