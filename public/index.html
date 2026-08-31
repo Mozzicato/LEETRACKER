@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#ffffff">
-  <title>Sign in · Lit-Sheet</title>
+  <title>Login · Lit-Sheet</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,11 +20,6 @@
     <h1 id="auth-heading">Welcome back.</h1>
     <p class="auth-sub" id="auth-sub">Sign in to pick up your sheet where you left it.</p>
 
-    <div class="seg auth-toggle" id="auth-toggle" role="group" aria-label="Sign in or create an account">
-      <button type="button" data-mode="login" class="is-active">Sign in</button>
-      <button type="button" data-mode="signup">Create account</button>
-    </div>
-
     <a class="google-btn is-hidden" id="google-btn" href="/api/auth/google">
       <svg viewBox="0 0 18 18" width="17" height="17" aria-hidden="true">
         <path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.2-.2-1.8H9v3.5h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.6z"/>
@@ -32,10 +27,15 @@
         <path fill="#FBBC05" d="M3.9 10.7a5.4 5.4 0 0 1 0-3.4V5H.9a9 9 0 0 0 0 8l3-2.3z"/>
         <path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"/>
       </svg>
-      Continue with Google
+      Sign in with Google
     </a>
 
     <div class="auth-divider is-hidden" id="auth-divider"><span>or</span></div>
+
+    <div class="seg auth-toggle" id="auth-toggle" role="group" aria-label="Log in or create an account">
+      <button type="button" data-mode="login" class="is-active">Login</button>
+      <button type="button" data-mode="signup">Create account</button>
+    </div>
 
     <form id="auth-form" novalidate>
       <label class="field" id="name-field" hidden>Name <span class="optional">optional</span>
@@ -52,7 +52,7 @@
 
       <p class="auth-error is-hidden" id="auth-error" role="alert"></p>
 
-      <button class="primary wide" id="auth-submit" type="submit">Sign in</button>
+      <button class="primary wide" id="auth-submit" type="submit">Login</button>
     </form>
 
     <p class="auth-foot" id="auth-foot">

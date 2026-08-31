@@ -5,8 +5,8 @@ let mode = 'login';
 const copy = {
   login: {
     heading: 'Welcome back.',
-    sub: 'Sign in to pick up your sheet where you left it.',
-    submit: 'Sign in',
+    sub: 'Pick up your sheet where you left it.',
+    submit: 'Login',
     foot: 'New here? ',
     footAction: 'Create an account',
     footMode: 'signup',
@@ -17,7 +17,7 @@ const copy = {
     sub: 'One account keeps every problem you have written down, on any device.',
     submit: 'Create account',
     foot: 'Already have an account? ',
-    footAction: 'Sign in',
+    footAction: 'Login',
     footMode: 'login',
     autocomplete: 'new-password'
   }
@@ -71,7 +71,7 @@ $('#auth-form').addEventListener('submit', async event => {
 
   const submit = $('#auth-submit');
   submit.disabled = true;
-  submit.textContent = mode === 'signup' ? 'Creating account…' : 'Signing in…';
+  submit.textContent = mode === 'signup' ? 'Creating account…' : 'Logging in…';
 
   try {
     const response = await fetch(`/api/auth/${mode === 'signup' ? 'signup' : 'login'}`, {
