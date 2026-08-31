@@ -39,10 +39,10 @@ npm start                      # http://localhost:5173
 | `AUTH_SECRET` | yes | Any long random string; signs session cookies |
 | `GOOGLE_CLIENT_ID` | no | Google OAuth client. Omit to hide the Google button |
 | `GOOGLE_CLIENT_SECRET` | no | " |
-| `APP_URL` | no | Defaults to `http://localhost:5173` |
+| `APP_URL` | no | Pins the public address. Derived from the request when unset |
 
-For Google sign-in, add `APP_URL + /api/auth/google/callback` as an authorised
-redirect URI on the OAuth client, exactly.
+For Google sign-in, add `<your address>/api/auth/google/callback` as an
+authorised redirect URI on the OAuth client. Google matches it exactly.
 
 ## Layout
 
@@ -65,21 +65,27 @@ One runtime dependency: `@neondatabase/serverless`. There is no build step.
 `public/` is served as static files and `api/[...path].mjs` becomes a serverless
 function, so the same `lib/api.mjs` runs locally and in production.
 
-1. Import the repo at **vercel.com/new**.
+1. Import the repo at **vercel.com/new**. Leave **Root Directory** as `./` —
+   `api/`, `package.json` and `vercel.json` all live at the repo root, and
+   `vercel.json` already points the static build at `public/`.
 2. Add environment variables (Settings → Environment Variables):
    `DATABASE_URL`, `AUTH_SECRET`, and optionally `GOOGLE_CLIENT_ID` /
    `GOOGLE_CLIENT_SECRET`.
-3. Deploy, then set `APP_URL` to the domain Vercel gives you
-   (e.g. `https://leetracker.vercel.app`) and redeploy — Google's redirect URI
-   is built from it.
+3. Deploy. `APP_URL` is not needed — the app works out its own address from the
+   request, so Google sign-in works on whatever domain Vercel gives you. Set it
+   only to pin one specific domain.
 4. For Google sign-in, add `https://your-domain/api/auth/google/callback` to the
-   OAuth client's authorised redirect URIs. Google matches it exactly.
+   OAuth client's authorised redirect URIs.
 
 The schema lives in Neon, so there is nothing to migrate at deploy time. Run
 `npm run db:migrate` locally whenever `db/schema.sql` changes.
 
 Session cookies gain the `Secure` flag automatically when `VERCEL` is set or
 `APP_URL` starts with `https:`.
+
+**Skip Vercel's Neon storage integration** if you already have a Neon database.
+It provisions a *new* one and injects its own `DATABASE_URL`, which would point
+the app at an empty database. Paste your existing connection string instead.
 
 ## Security notes
 
