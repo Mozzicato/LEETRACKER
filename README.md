@@ -101,3 +101,21 @@ existing password account, which stops someone pre-registering your address and
 being handed your account. A passwordless row is safe to adopt, so those still
 link. The proper fix is a verification email on password signup — free at this
 scale via Gmail SMTP (~500/day) or Brevo (300/day).
+
+### If the Google button does not appear on a deployment
+
+Open `https://your-domain/api/health`. It should return JSON:
+
+```json
+{"ok":true,"database":true,"authSecret":true,"google":true}
+```
+
+- **HTML or a redirect to `vercel.com/sso-api`** — Vercel Deployment Protection is
+  in front of the app. Settings → Deployment Protection → set Vercel
+  Authentication to Disabled (or add a bypass). The browser passes it because
+  you are signed in to Vercel, but the page's own `fetch` calls do not, so the
+  API looks dead from inside the page.
+- **`"google": false`** — `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` are not set
+  for that environment. They live in `.env.local`, which is gitignored, so they
+  must be added in Vercel by hand. Redeploy after changing them.
+- **`"database": false`** — `DATABASE_URL` is missing.

@@ -108,11 +108,25 @@ fetch('/api/auth/me')
   .catch(() => { /* stay on the form */ });
 
 /* Only offer Google if the server actually has credentials for it. */
+const showGoogle = on => {
+  $('#google-btn').classList.toggle('is-hidden', !on);
+  $('#auth-divider').classList.toggle('is-hidden', !on);
+};
+
 fetch('/api/auth/config')
-  .then(response => response.json())
-  .then(config => {
-    if (!config.google) return;
-    $('#google-btn').classList.remove('is-hidden');
-    $('#auth-divider').classList.remove('is-hidden');
+  .then(async response => {
+    if (!response.ok) throw new Error(`the API returned ${response.status}`);
+    const type = response.headers.get('content-type') || '';
+    /* Anything but JSON means something sits in front of the API — a login
+       wall, a proxy, a 404 page — not our server answering. */
+    if (!type.includes('application/json')) throw new Error('the API did not return JSON');
+    return response.json();
   })
-  .catch(() => { /* leave the button hidden */ });
+  .then(config => showGoogle(config.google))
+  .catch(problem => {
+    /* Fail open. Hiding the button on failure makes a broken deployment look
+       like a missing feature, which is impossible to diagnose from the page. */
+    showGoogle(true);
+    console.error('Could not read /api/auth/config:', problem);
+    showError(`Could not reach the server (${problem.message}). Login may not work.`);
+  });
