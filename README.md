@@ -80,6 +80,13 @@ function, so the same `lib/api.mjs` runs locally and in production.
 The schema lives in Neon, so there is nothing to migrate at deploy time. Run
 `npm run db:migrate` locally whenever `db/schema.sql` changes.
 
+Putting it on the custom domain is a separate checklist:
+**[DOMAIN-SETUP.md](DOMAIN-SETUP.md)**.
+
+Everything under `/api/*` is served by the single function `api/index.mjs`, via
+a rewrite in `vercel.json`. Do not split the routes into a file each — Hobby
+plans cap a deployment at 12 serverless functions and the build fails.
+
 Session cookies gain the `Secure` flag automatically when `VERCEL` is set or
 `APP_URL` starts with `https:`.
 
