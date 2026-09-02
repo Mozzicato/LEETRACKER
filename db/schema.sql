@@ -59,3 +59,21 @@ create unique index if not exists users_google_id_key on users (google_id);
 alter table questions add column if not exists patterns text[] not null default '{}';
 
 create index if not exists questions_patterns on questions using gin (patterns);
+
+-- Where people are signing in from, filled from the edge geo headers, plus
+-- when they were last seen. Used only by the owner's dashboard.
+alter table users add column if not exists country text;
+alter table users add column if not exists region text;
+alter table users add column if not exists city text;
+alter table users add column if not exists last_seen_at timestamptz;
+
+create table if not exists feedback (
+  id uuid primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  message text not null,
+  page text,
+  resolved boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists feedback_recent on feedback (created_at desc);

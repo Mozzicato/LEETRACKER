@@ -36,6 +36,7 @@ let patternNames = {};
 let chosenPatterns = [];
 let maxPatterns = 4;
 let cheats = [];
+let isAdmin = false;
 let section = 'sheet';
 let viewMode = 'overview';
 let groupBy = 'date';
@@ -335,6 +336,15 @@ function groupCheats(list) {
 }
 
 function renderBoard() {
+  if (section === 'admin') {
+    $('#section-title').textContent = 'Dashboard';
+    $('#section-sub').textContent = 'Who is using Lit-Sheet, and what they are telling you.';
+    document.querySelectorAll('.controls, #legend, #spread-bar').forEach(node => node.classList.add('is-hidden'));
+    renderAdmin().catch(problem => { $('#board').innerHTML = ''; showError(problem.message); });
+    return;
+  }
+  document.querySelectorAll('.controls, #legend, #spread-bar').forEach(node => node.classList.remove('is-hidden'));
+
   const urgentCount = cheats.filter(needsPractice).length;
   $('#urgent-badge').textContent = urgentCount;
   $('#urgent-badge').dataset.empty = urgentCount === 0;
@@ -703,6 +713,113 @@ async function loadSample() {
   }
 }
 
+/* ---------- feedback ---------- */
+
+function openFeedback() {
+  $('#feedback-form').reset();
+  $('#feedback-modal').classList.remove('is-hidden');
+  $('#feedback-input').focus();
+}
+
+/* ---------- the owner's dashboard ---------- */
+
+const whenText = value => {
+  if (!value) return 'never';
+  const days = -dayDiff(value.slice(0, 10));
+  return days <= 0 ? 'today' : days === 1 ? 'yesterday' : `${days}d ago`;
+};
+
+function statBlock(label, value, note) {
+  return `<div class="stat"><dt>${label}</dt><dd>${value}</dd>${note ? `<small>${note}</small>` : ''}</div>`;
+}
+
+function barList(rows, labelKey, valueKey) {
+  const top = Math.max(1, ...rows.map(row => row[valueKey]));
+  return rows.length
+    ? `<div class="bars">${rows.map(row => `<div class="bar-row">
+        <span>${escapeHtml(labelKey === 'pattern' ? patternName(row[labelKey]) : row[labelKey])}</span>
+        <span class="bar-track"><span class="bar-fill" style="width:${Math.round((row[valueKey] / top) * 100)}%"></span></span>
+        <span>${row[valueKey]}</span>
+      </div>`).join('')}</div>`
+    : '<p class="muted">Nothing yet.</p>';
+}
+
+async function renderAdmin() {
+  const board = $('#board');
+  board.innerHTML = '<p class="loading">Loading the dashboard…</p>';
+
+  const [data, notes] = await Promise.all([
+    api('/api/admin/overview'),
+    api('/api/admin/feedback')
+  ]);
+
+  const { totals, work, countries, patterns, recent } = data;
+  const open = notes.feedback.filter(note => !note.resolved).length;
+  $('#feedback-badge').textContent = open;
+  $('#feedback-badge').dataset.empty = open === 0;
+
+  board.innerHTML = `
+    <dl class="stats">
+      ${statBlock('People', totals.users, `${totals.new_this_week} joined this week`)}
+      ${statBlock('Active', totals.active_this_week, 'seen in the last 7 days')}
+      ${statBlock('Signed up with', totals.via_google, `Google · ${totals.via_password} with a password`)}
+      ${statBlock('Questions', work.questions, `by ${work.users_with_questions} ${work.users_with_questions === 1 ? 'person' : 'people'}`)}
+      ${statBlock('Reviews', work.reviews, 'recall attempts logged')}
+      ${statBlock('Open feedback', work.open_feedback, 'waiting on you')}
+    </dl>
+
+    <section class="panel">
+      <h2>Where they are</h2>
+      ${barList(countries, 'country', 'users')}
+    </section>
+
+    <section class="panel">
+      <h2>Most used patterns</h2>
+      ${barList(patterns, 'pattern', 'uses')}
+    </section>
+
+    <section class="panel">
+      <h2>Feedback</h2>
+      ${notes.feedback.length ? `<div class="notes-list">${notes.feedback.map(note => `
+        <article class="note${note.resolved ? ' is-resolved' : ''}">
+          <div class="note-head">
+            <span class="note-who">${escapeHtml(note.email)}${note.country ? ` · ${escapeHtml(note.country)}` : ''}</span>
+            <span class="note-when">${whenText(note.created_at)}</span>
+          </div>
+          <p class="note-body">${escapeHtml(note.message)}</p>
+          <div class="note-foot">
+            <button class="link-btn" data-resolve="${note.id}" data-to="${!note.resolved}">${note.resolved ? 'Reopen' : 'Mark handled'}</button>
+          </div>
+        </article>`).join('')}</div>` : '<p class="muted">No feedback yet.</p>'}
+    </section>
+
+    <section class="panel">
+      <h2>Newest accounts</h2>
+      <div class="table-scroll"><table class="table">
+        <thead><tr><th>Email</th><th>How</th><th>Where</th><th>Questions</th><th>Joined</th><th>Last seen</th></tr></thead>
+        <tbody>${recent.map(person => `<tr>
+          <td>${escapeHtml(person.email)}</td>
+          <td class="muted">${person.google ? 'Google' : ''}${person.google && person.password ? ' + ' : ''}${person.password ? 'Password' : ''}</td>
+          <td class="muted">${escapeHtml([person.city, person.country].filter(Boolean).join(', ')) || '—'}</td>
+          <td>${person.questions}</td>
+          <td class="muted">${whenText(person.created_at)}</td>
+          <td class="muted">${whenText(person.last_seen_at)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </section>`;
+
+  board.querySelectorAll('[data-resolve]').forEach(button =>
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      try {
+        await api(`/api/admin/feedback/${button.dataset.resolve}/resolve`,
+          { method: 'POST', body: { resolved: button.dataset.to === 'true' } });
+        renderAdmin();
+      } catch (problem) { showError(problem.message); button.disabled = false; }
+    })
+  );
+}
+
 /* ---------- wiring ---------- */
 
 document.querySelectorAll('[data-section]').forEach(button => button.addEventListener('click', () => {
@@ -748,6 +865,28 @@ document.querySelectorAll('.scrim, .drawer-scrim').forEach(scrim =>
 $('#problem-search').addEventListener('input', event => renderProblemResults(event.target.value));
 $('#pattern-search').addEventListener('input', event => renderPatternResults(event.target.value));
 $('#pattern-search').addEventListener('focus', () => renderPatternResults($('#pattern-search').value));
+
+$('#send-feedback').addEventListener('click', openFeedback);
+
+$('#feedback-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const submit = $('#feedback-submit');
+  submit.disabled = true;
+  submit.textContent = 'Sending…';
+  try {
+    await api('/api/feedback', {
+      method: 'POST',
+      body: { message: $('#feedback-input').value.trim(), page: section }
+    });
+    closeModals();
+    toast('Thanks — that reached the developer.');
+  } catch (problem) {
+    showError(problem.message);
+  } finally {
+    submit.disabled = false;
+    submit.textContent = 'Send';
+  }
+});
 
 $('#sign-out').addEventListener('click', async () => {
   await fetch('/api/auth/logout', { method: 'POST' });
@@ -831,6 +970,8 @@ async function start() {
     ]);
     $('#account-email').textContent = me.user.email;
     $('#account-email').title = me.user.email;
+    isAdmin = Boolean(me.user.isAdmin);
+    $('#admin-nav').classList.toggle('is-hidden', !isAdmin);
     problems = catalogue.problems;
     patternFamilies = catalogue.patternFamilies || [];
     maxPatterns = catalogue.maxPatterns || 4;

@@ -61,6 +61,7 @@ npm start                      # http://localhost:5173
 | `GOOGLE_CLIENT_ID` | no | Google OAuth client. Omit to hide the Google button |
 | `GOOGLE_CLIENT_SECRET` | no | " |
 | `APP_URL` | no | Pins the public address. Derived from the request when unset |
+| `ADMIN_EMAIL` | no | The one account that sees the dashboard and feedback |
 
 For Google sign-in, add `<your address>/api/auth/google/callback` as an
 authorised redirect URI on the OAuth client. Google matches it exactly.
@@ -147,3 +148,21 @@ Open `https://your-domain/api/health`. It should return JSON:
   for that environment. They live in `.env.local`, which is gitignored, so they
   must be added in Vercel by hand. Redeploy after changing them.
 - **`"database": false`** — `DATABASE_URL` is missing.
+
+## Dashboard and feedback
+
+Every signed-in person gets a quiet **Feedback** link beside Sign out in the
+rail. Messages land in the `feedback` table.
+
+Setting `ADMIN_EMAIL` to your own address adds a **Dashboard** section, visible
+only to that account: how many people have signed up, how many are active, how
+they signed in, roughly where they are, which patterns get used most, the newest
+accounts, and every piece of feedback with a handled/reopen toggle.
+
+The check is made on the server against the signed-in account, so hiding the nav
+item is presentation only — `/api/admin/*` returns 403 to everyone else. Leave
+`ADMIN_EMAIL` unset and the whole thing stays off.
+
+Location comes from the edge geo headers the host adds (`x-vercel-ip-country`
+and friends), so it fills in on the deployment and stays blank locally. A known
+location is never overwritten with a blank one.

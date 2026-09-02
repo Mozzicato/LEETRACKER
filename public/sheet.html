@@ -28,6 +28,11 @@
           <span class="rail-label">Urgent</span>
           <span class="rail-badge" id="urgent-badge">0</span>
         </button>
+        <button class="rail-btn is-hidden" data-section="admin" id="admin-nav">
+          <span class="rail-icon" aria-hidden="true">◍</span>
+          <span class="rail-label">Dashboard</span>
+          <span class="rail-badge" id="feedback-badge" data-empty="true">0</span>
+        </button>
       </nav>
 
       <button class="mode" id="mode" aria-label="Your mode"></button>
@@ -36,7 +41,10 @@
         <button class="add-btn" id="add-cheat">+ Add question</button>
         <div class="rail-account">
           <span class="rail-email" id="account-email">…</span>
-          <button class="link-btn" id="sign-out" type="button">Sign out</button>
+          <div class="rail-links">
+            <button class="link-btn" id="send-feedback" type="button">Feedback</button>
+            <button class="link-btn" id="sign-out" type="button">Sign out</button>
+          </div>
         </div>
       </div>
     </aside>
@@ -147,6 +155,20 @@
           <textarea id="notes-input" rows="2" placeholder="A mistake, an edge case, a wrong turn"></textarea>
         </label>
         <button class="primary wide" id="add-submit" type="submit">Save question</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="scrim is-hidden" id="feedback-modal" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
+    <div class="dialog">
+      <button class="dismiss" data-close-modal aria-label="Close">×</button>
+      <h2 id="feedback-title">Tell the developer</h2>
+      <p class="feedback-intro">Anything broken, missing or annoying. It goes straight to the person who builds this.</p>
+      <form id="feedback-form">
+        <label class="field">Your message
+          <textarea id="feedback-input" required rows="5" placeholder="What would make Lit-Sheet better?"></textarea>
+        </label>
+        <button class="primary wide" id="feedback-submit" type="submit">Send</button>
       </form>
     </div>
   </div>
