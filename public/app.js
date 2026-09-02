@@ -49,7 +49,7 @@ let reviewIndex = 0;
 
 const $ = selector => document.querySelector(selector);
 
-const byNumber = number => problems.find(problem => problem.number === number);
+const byNumber = number => problems.find(problem => problem.number === Number(number));
 const patternName = key => patternNames[key] || key;
 const allPatterns = () => patternFamilies.flatMap(family =>
   family.patterns.map(pattern => ({ ...pattern, family: family.name })));
@@ -592,17 +592,38 @@ function closeModals() {
   document.querySelectorAll('.scrim, .drawer-scrim').forEach(modal => modal.classList.add('is-hidden'));
 }
 
+let problemSearchTimer = null;
+let problemSearchToken = 0;
+
+/* Every LeetCode problem lives on the server, so searching asks it rather than
+   shipping 4,000 entries to the browser. */
 function renderProblemResults(query = '') {
-  const needle = query.trim().toLowerCase();
-  const matches = problems
-    .filter(problem => !needle || `${problem.number} ${problem.title} ${problem.topic}`.toLowerCase().includes(needle))
-    .slice(0, 5);
-  $('#problem-results').innerHTML = matches.map(problem =>
-    `<button type="button" class="result" data-problem-number="${problem.number}"><span class="result-no">#${problem.number}</span><span class="result-name">${escapeHtml(problem.title)}</span><span class="result-diff">${problem.difficulty}</span></button>`
-  ).join('');
-  document.querySelectorAll('[data-problem-number]').forEach(button =>
-    button.addEventListener('click', () => selectProblem(byNumber(Number(button.dataset.problemNumber))))
-  );
+  clearTimeout(problemSearchTimer);
+  problemSearchTimer = setTimeout(async () => {
+    const token = ++problemSearchToken;
+    try {
+      const data = await api(`/api/problems/search?q=${encodeURIComponent(query.trim())}`);
+      /* A slower earlier request must not overwrite a newer one. */
+      if (token !== problemSearchToken) return;
+
+      problems = data.problems;
+      $('#problem-results').innerHTML = problems.length
+        ? problems.map(problem =>
+            `<button type="button" class="result" data-problem-number="${problem.number}">
+              <span class="result-no">#${problem.number}</span>
+              <span class="result-name">${escapeHtml(problem.title)}${problem.paid ? ' <span class="result-paid">premium</span>' : ''}</span>
+              <span class="result-diff">${problem.difficulty}</span>
+            </button>`).join('')
+        : '<p class="result-empty">No problem matches that.</p>';
+
+      document.querySelectorAll('[data-problem-number]').forEach(button =>
+        button.addEventListener('click', () => selectProblem(byNumber(button.dataset.problemNumber)))
+      );
+    } catch (problem) {
+      $('#problem-results').innerHTML = '';
+      showError(problem.message);
+    }
+  }, 160);
 }
 
 function selectProblem(problem) {
@@ -972,11 +993,13 @@ async function start() {
     $('#account-email').title = me.user.email;
     isAdmin = Boolean(me.user.isAdmin);
     $('#admin-nav').classList.toggle('is-hidden', !isAdmin);
-    problems = catalogue.problems;
     patternFamilies = catalogue.patternFamilies || [];
     maxPatterns = catalogue.maxPatterns || 4;
     patternNames = Object.fromEntries(allPatterns().map(pattern => [pattern.key, pattern.name]));
     $('#pattern-max').textContent = maxPatterns;
+    if (catalogue.problemCount) {
+      $('#problem-search').placeholder = `Search all ${catalogue.problemCount.toLocaleString()} LeetCode problems`;
+    }
 
     await loadQuestions();
     renderBoard();

@@ -82,6 +82,17 @@ db/schema.sql     applied by `npm run db:migrate` (idempotent)
 
 One runtime dependency: `@neondatabase/serverless`. There is no build step.
 
+## The problem catalogue
+
+All 4,042 LeetCode problems live in `data/problems.json`, imported by
+`npm run problems:fetch` and committed, so a deploy never depends on LeetCode
+being reachable. Re-run it whenever you want newly added problems.
+
+The file is ~750 KB, so it is never sent to the browser. The add form searches
+it through `/api/problems/search?q=`, which returns at most 20 ranked matches:
+an exact number first, then a title prefix, then anything containing the term,
+then a topic tag, with free problems ahead of premium ones.
+
 ## Deploying to Vercel
 
 `public/` is served as static files and `api/[...path].mjs` becomes a serverless
