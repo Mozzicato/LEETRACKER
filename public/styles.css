@@ -673,3 +673,48 @@ button[disabled] { opacity: .55; cursor: not-allowed; }
 
 /* A display rule on the element beats the hidden attribute's UA style, so make it explicit. */
 [hidden] { display: none !important; }
+
+/* ---------- patterns ---------- */
+
+.pattern-field { display: block; margin-bottom: 16px; }
+.pattern-label { display: block; color: var(--ink-faint); font: 500 11px var(--ui); margin-bottom: 6px; }
+.pattern-label small { display: block; margin-top: 2px; color: #b4b8c0; font-weight: 400; }
+
+.pattern-chosen { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.pattern-chosen:empty { display: none; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 8px; border-radius: 999px;
+  background: #f1f1f4; color: var(--ink);
+  font: 500 11.5px var(--ui); white-space: nowrap;
+}
+.chip button { border: 0; background: none; cursor: pointer; padding: 0; color: var(--ink-faint); font-size: 14px; line-height: 1; }
+.chip button:hover { color: var(--ink); }
+.chip[data-brute="true"] { background: #fdeae6; color: #a52d1c; }
+
+#pattern-search { width: 100%; border: 1px solid var(--line); border-radius: 7px; padding: 10px 11px; font: 400 13.5px var(--ui); color: var(--ink); outline: 0; }
+#pattern-search:focus { border-color: var(--ink); }
+
+.pattern-results { max-height: 210px; overflow: auto; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 7px 7px; }
+.pattern-results:empty { display: none; }
+.pattern-family { padding: 7px 11px 3px; color: var(--ink-faint); font: 600 9.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; background: #fafafb; position: sticky; top: 0; }
+.pattern-option { display: block; width: 100%; border: 0; background: none; cursor: pointer; text-align: left; padding: 8px 11px; font: 400 13px var(--ui); color: var(--ink); }
+.pattern-option:hover { background: #f4f4f6; }
+.pattern-option[disabled] { opacity: .45; cursor: not-allowed; }
+.pattern-option[data-brute="true"] { color: #a52d1c; font-weight: 600; }
+
+.pattern-warn { margin: 10px 0 0; padding: 9px 11px; border-radius: 7px; background: #fdeae6; color: #a52d1c; font: 400 12px/1.5 var(--ui); }
+
+/* pattern chips shown on the sheet */
+.tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.tag {
+  display: inline-block; padding: 2px 7px; border-radius: 999px;
+  background: #f1f1f4; color: var(--ink-soft);
+  font: 500 10.5px var(--ui); white-space: nowrap;
+}
+.tag[data-brute="true"] { background: #fdeae6; color: #a52d1c; }
+.tag-none { background: none; color: #b4b8c0; padding-left: 0; font-style: italic; }
+
+.cell-q .tags { margin-top: 4px; }
+.detail-patterns { margin: 0 0 20px; }

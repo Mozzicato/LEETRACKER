@@ -22,6 +22,27 @@ Vaulted → Mastered → Strong → Steady → Slipping → Fading → Weak → 
 Nothing else on the page competes for colour — a warm colour always means a
 memory is decaying.
 
+## Topics and patterns are different things
+
+A **topic** is the category a problem is filed under — Arrays, Linked List,
+Two Pointers. It belongs to the problem and never changes.
+
+A **pattern** is the technique *you* actually used. "Two Pointers" is a topic;
+converging, fast-and-slow and fixed separation are three different patterns
+inside it. Because most problems have several valid approaches, patterns are
+recorded per question and you pick up to four — enough for a genuine
+combination like *binary search on the answer + greedy*, without letting the
+label mean nothing.
+
+`lib/patterns.mjs` holds 146 patterns across 21 families, from the common ones
+through to Mo's algorithm and heavy-light decomposition. Both the sheet and the
+picker read from it, so they cannot drift apart.
+
+**Brute force is a pattern too**, and choosing it has consequences: the question
+is pinned into **Urgent** and can never climb past *Slipping*, however recently
+you reviewed it. An unoptimised solution is not the one you want handed back to
+you, so the app refuses to call it known until you record a better approach.
+
 ## Running it
 
 ```bash

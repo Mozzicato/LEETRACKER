@@ -53,3 +53,9 @@ create index if not exists reviews_by_question on reviews (question_id, reviewed
 alter table users add column if not exists google_id text;
 
 create unique index if not exists users_google_id_key on users (google_id);
+
+-- The technique used, chosen per question because one problem has many valid
+-- approaches. Distinct from problems.topic, which is the category.
+alter table questions add column if not exists patterns text[] not null default '{}';
+
+create index if not exists questions_patterns on questions using gin (patterns);

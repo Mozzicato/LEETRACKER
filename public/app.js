@@ -31,6 +31,10 @@ const RANKS = [
 ];
 
 let problems = [];
+let patternFamilies = [];
+let patternNames = {};
+let chosenPatterns = [];
+let maxPatterns = 4;
 let cheats = [];
 let section = 'sheet';
 let viewMode = 'overview';
@@ -45,6 +49,9 @@ let reviewIndex = 0;
 const $ = selector => document.querySelector(selector);
 
 const byNumber = number => problems.find(problem => problem.number === number);
+const patternName = key => patternNames[key] || key;
+const allPatterns = () => patternFamilies.flatMap(family =>
+  family.patterns.map(pattern => ({ ...pattern, family: family.name })));
 const today = () => new Date().toISOString().slice(0, 10);
 const addDays = (date, days) => { const next = new Date(`${date}T12:00:00`); next.setDate(next.getDate() + days); return next.toISOString().slice(0, 10); };
 const dayDiff = date => Math.round((new Date(`${date}T12:00:00`) - new Date(`${today()}T12:00:00`)) / 86400000);
@@ -86,7 +93,8 @@ const fromApi = question => ({
   solvedAt: question.created_at.slice(0, 10),
   nextReview: question.next_review_at.slice(0, 10),
   interval: question.interval_days,
-  reviewCount: question.review_count
+  reviewCount: question.review_count,
+  patterns: question.patterns || []
 });
 
 function showError(message) {
@@ -99,7 +107,10 @@ const hideError = () => $('#app-error').classList.add('is-hidden');
 
 /* ---------- the progression ---------- */
 
-function health(cheat) {
+const BRUTE_FORCE = 'brute-force';
+const isBruteForce = cheat => (cheat.patterns || []).includes(BRUTE_FORCE);
+
+function decay(cheat) {
   const late = -dayDiff(cheat.nextReview);
   const rung = Math.max(0, LADDER.indexOf(cheat.interval));
 
@@ -115,16 +126,39 @@ function health(cheat) {
   return 'abandoned';
 }
 
+function health(cheat) {
+  const natural = decay(cheat);
+  if (!isBruteForce(cheat)) return natural;
+
+  /* A brute-force solution is not the one you want to remember, so it never
+     counts as known however recently you reviewed it. It can still rot further
+     from there. */
+  const floor = SCALE.findIndex(step => step.key === 'slipping');
+  return SCALE.findIndex(step => step.key === natural) < floor ? 'slipping' : natural;
+}
+
 function stateLine(cheat) {
+  if (isBruteForce(cheat)) return 'brute force, not optimal yet';
   const diff = dayDiff(cheat.nextReview);
   if (diff > 0) return `in ${plural(diff, 'day')}`;
   if (diff === 0) return 'due today';
   return `${plural(-diff, 'day')} late`;
 }
 
-const needsPractice = cheat => dayDiff(cheat.nextReview) <= 0;
+const needsPractice = cheat => dayDiff(cheat.nextReview) <= 0 || isBruteForce(cheat);
 const labelFor = status => SCALE.find(step => step.key === status).label;
 const rungOf = cheat => Math.max(0, LADDER.indexOf(cheat.interval));
+
+/* The techniques used, as chips. */
+function patternTags(cheat, { empty = true } = {}) {
+  const keys = cheat.patterns || [];
+  if (!keys.length) {
+    return empty ? '<div class="tags"><span class="tag tag-none">no pattern recorded</span></div>' : '';
+  }
+  return '<div class="tags">' + keys.map(key =>
+    `<span class="tag" data-brute="${key === BRUTE_FORCE}">${escapeHtml(patternName(key))}</span>`
+  ).join('') + '</div>';
+}
 
 /* How far up the ladder, drawn as pips. */
 function ladderPips(cheat) {
@@ -246,6 +280,7 @@ function rowMarkup(cheat) {
     <div class="cell cell-q">
       <strong>${escapeHtml(cheat.problem.title)}</strong>
       <span><em>#${cheat.problem.number}</em>${cheat.problem.difficulty} · ${cheat.problem.topic}</span>
+      ${patternTags(cheat, { empty: false })}
     </div>
     <div class="cell cell-cx">
       <b>${escapeHtml(cheat.time) || '—'}</b>${escapeHtml(cheat.space) || '—'} space
@@ -261,17 +296,41 @@ function rowMarkup(cheat) {
 
 function groupCheats(list) {
   const buckets = new Map();
-  list.forEach(cheat => {
-    const key = groupBy === 'pattern' ? cheat.problem.topic : cheat.solvedAt.slice(0, 7);
+  const push = (key, cheat) => {
     if (!buckets.has(key)) buckets.set(key, []);
     buckets.get(key).push(cheat);
+  };
+
+  list.forEach(cheat => {
+    if (groupBy === 'topic') return push(cheat.problem.topic, cheat);
+    if (groupBy === 'pattern') {
+      /* A question can use more than one technique, so it belongs in each of
+         those groups — that is the point of grouping by pattern. */
+      const keys = cheat.patterns || [];
+      return keys.length ? keys.forEach(key => push(key, cheat)) : push('', cheat);
+    }
+    return push(cheat.solvedAt.slice(0, 7), cheat);
   });
 
-  const keys = [...buckets.keys()].sort((a, b) => groupBy === 'pattern' ? a.localeCompare(b) : b.localeCompare(a));
+  const label = key => {
+    if (groupBy === 'topic') return key;
+    if (groupBy === 'pattern') return key ? patternName(key) : 'No pattern recorded';
+    return monthLabel(key);
+  };
+
+  /* Dates newest first; names alphabetically, with the unlabelled bucket last. */
+  const keys = [...buckets.keys()].sort((a, b) => {
+    if (groupBy === 'date') return b.localeCompare(a);
+    if (!a) return 1;
+    if (!b) return -1;
+    return label(a).localeCompare(label(b));
+  });
+
   return keys.map(key => ({
-    key,
-    label: groupBy === 'pattern' ? key : monthLabel(key),
-    items: buckets.get(key).sort((a, b) => SCALE.findIndex(s => s.key === health(b)) - SCALE.findIndex(s => s.key === health(a)))
+    key: key || 'none',
+    label: label(key),
+    items: buckets.get(key).sort((a, b) =>
+      SCALE.findIndex(s => s.key === health(b)) - SCALE.findIndex(s => s.key === health(a)))
   }));
 }
 
@@ -291,12 +350,13 @@ function renderBoard() {
     if (urgentFilter === 'due') list = list.filter(cheat => dayDiff(cheat.nextReview) === 0);
     if (urgentFilter === 'overdue') list = list.filter(cheat => dayDiff(cheat.nextReview) < 0);
     if (urgentFilter === 'abandoned') list = list.filter(cheat => health(cheat) === 'abandoned');
+    if (urgentFilter === 'brute') list = list.filter(isBruteForce);
   }
 
   const needle = searchQuery.trim().toLowerCase();
   if (needle) {
     list = list.filter(cheat =>
-      `${cheat.problem.number} ${cheat.problem.title} ${cheat.problem.topic} ${cheat.insight}`.toLowerCase().includes(needle)
+      `${cheat.problem.number} ${cheat.problem.title} ${cheat.problem.topic} ${cheat.insight} ${(cheat.patterns || []).map(patternName).join(' ')}`.toLowerCase().includes(needle)
     );
   }
 
@@ -375,6 +435,8 @@ function openDetail(cheat) {
     <h2 id="detail-title">${escapeHtml(cheat.problem.title)}</h2>
     <p class="detail-sub">${cheat.problem.difficulty} · ${cheat.problem.topic}</p>
 
+    <div class="detail-patterns">${patternTags(cheat)}</div>
+
     <div class="detail-ladder" style="--c:var(--${status})">
       <div class="detail-ladder-head"><span>Mastery ladder</span><span>${LADDER.map(days => `${days}d`).join(' › ')}</span></div>
       ${ladderPips(cheat)}
@@ -431,12 +493,64 @@ function setActive(container, attribute, value) {
   );
 }
 
+/* ---------- the pattern picker ---------- */
+
+function renderChosenPatterns() {
+  $('#pattern-chosen').innerHTML = chosenPatterns.map(key =>
+    `<span class="chip" data-brute="${key === BRUTE_FORCE}">${escapeHtml(patternName(key))}<button type="button" data-drop="${key}" aria-label="Remove ${escapeHtml(patternName(key))}">&times;</button></span>`
+  ).join('');
+
+  $('#pattern-chosen').querySelectorAll('[data-drop]').forEach(button =>
+    button.addEventListener('click', () => {
+      chosenPatterns = chosenPatterns.filter(key => key !== button.dataset.drop);
+      renderChosenPatterns();
+      renderPatternResults($('#pattern-search').value);
+    })
+  );
+
+  $('#pattern-warn').classList.toggle('is-hidden', !chosenPatterns.includes(BRUTE_FORCE));
+}
+
+function renderPatternResults(query = '') {
+  const needle = query.trim().toLowerCase();
+  const full = chosenPatterns.length >= maxPatterns;
+
+  const matches = allPatterns().filter(pattern =>
+    !chosenPatterns.includes(pattern.key) &&
+    (!needle || `${pattern.name} ${pattern.family}`.toLowerCase().includes(needle))
+  ).slice(0, needle ? 40 : 12);
+
+  let markup = '';
+  let family = '';
+  matches.forEach(pattern => {
+    if (pattern.family !== family) {
+      family = pattern.family;
+      markup += `<div class="pattern-family">${escapeHtml(family)}</div>`;
+    }
+    markup += `<button type="button" class="pattern-option" data-pattern="${pattern.key}" data-brute="${pattern.key === BRUTE_FORCE}"${full ? ' disabled' : ''}>${escapeHtml(pattern.name)}</button>`;
+  });
+
+  $('#pattern-results').innerHTML = markup;
+  $('#pattern-results').querySelectorAll('[data-pattern]').forEach(button =>
+    button.addEventListener('click', () => {
+      if (chosenPatterns.length >= maxPatterns) return;
+      chosenPatterns.push(button.dataset.pattern);
+      $('#pattern-search').value = '';
+      renderChosenPatterns();
+      renderPatternResults();
+    })
+  );
+}
+
 /* ---------- adding ---------- */
 
 function openAddModal() {
   editingId = null;
   selectedProblem = null;
+  chosenPatterns = [];
   $('#add-form').reset();
+  renderChosenPatterns();
+  renderPatternResults();
   $('#selected-problem').classList.add('is-hidden');
   $('#problem-search').disabled = false;
   $('#add-title').textContent = 'Add a question';
@@ -454,6 +568,9 @@ function openEditModal(cheat) {
   $('#notes-input').value = cheat.notes || '';
   $('#time-input').value = cheat.time || '';
   $('#space-input').value = cheat.space || '';
+  chosenPatterns = [...(cheat.patterns || [])];
+  renderChosenPatterns();
+  renderPatternResults();
   selectProblem(cheat.problem);
   /* The problem itself is fixed once it is on your sheet. */
   $('#problem-search').disabled = true;
@@ -629,6 +746,8 @@ document.querySelectorAll('.scrim, .drawer-scrim').forEach(scrim =>
   scrim.addEventListener('click', event => { if (event.target === scrim) closeModals(); })
 );
 $('#problem-search').addEventListener('input', event => renderProblemResults(event.target.value));
+$('#pattern-search').addEventListener('input', event => renderPatternResults(event.target.value));
+$('#pattern-search').addEventListener('focus', () => renderPatternResults($('#pattern-search').value));
 
 $('#sign-out').addEventListener('click', async () => {
   await fetch('/api/auth/logout', { method: 'POST' });
@@ -657,7 +776,8 @@ $('#add-form').addEventListener('submit', async event => {
         insight: $('#insight-input').value.trim(),
         notes: $('#notes-input').value.trim(),
         time: $('#time-input').value.trim(),
-        space: $('#space-input').value.trim()
+        space: $('#space-input').value.trim(),
+        patterns: chosenPatterns
       }
     });
 
@@ -669,6 +789,8 @@ $('#add-form').addEventListener('submit', async event => {
 
     $('#add-form').reset();
     $('#problem-search').disabled = false;
+    chosenPatterns = [];
+    renderChosenPatterns();
     selectedProblem = null;
     editingId = null;
     $('#selected-problem').classList.add('is-hidden');
@@ -710,6 +832,10 @@ async function start() {
     $('#account-email').textContent = me.user.email;
     $('#account-email').title = me.user.email;
     problems = catalogue.problems;
+    patternFamilies = catalogue.patternFamilies || [];
+    maxPatterns = catalogue.maxPatterns || 4;
+    patternNames = Object.fromEntries(allPatterns().map(pattern => [pattern.key, pattern.name]));
+    $('#pattern-max').textContent = maxPatterns;
 
     await loadQuestions();
     renderBoard();

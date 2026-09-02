@@ -63,6 +63,7 @@
         </div>
         <div class="seg" id="group-toggle" role="group" aria-label="Group by">
           <button data-group="date" class="is-active">By date</button>
+          <button data-group="topic">By topic</button>
           <button data-group="pattern">By pattern</button>
         </div>
         <div class="seg is-hidden" id="filter-toggle" role="group" aria-label="Filter">
@@ -70,6 +71,7 @@
           <button data-filter="due">Due today</button>
           <button data-filter="overdue">Overdue</button>
           <button data-filter="abandoned">Abandoned</button>
+          <button data-filter="brute">Brute force</button>
         </div>
       </div>
 
@@ -120,6 +122,20 @@
         </label>
         <div id="problem-results" class="results"></div>
         <div id="selected-problem" class="chosen is-hidden"></div>
+        <div class="field pattern-field">
+          <span class="pattern-label">
+            Pattern you used
+            <small>the technique, not the topic — pick up to <b id="pattern-max">4</b></small>
+          </span>
+          <div id="pattern-chosen" class="pattern-chosen"></div>
+          <input id="pattern-search" placeholder="Search patterns — sliding window, fast and slow, Kadane…" autocomplete="off">
+          <div id="pattern-results" class="pattern-results"></div>
+          <p class="pattern-warn is-hidden" id="pattern-warn">
+            Brute force is not the intended solution, so this question stays in
+            <b>Urgent</b> and can never count as mastered until you record a better approach.
+          </p>
+        </div>
+
         <label class="field">Key thing to remember
           <textarea id="insight-input" required rows="3" placeholder="The observation you would want handed back to you in six weeks"></textarea>
         </label>
