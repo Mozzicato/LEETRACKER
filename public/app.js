@@ -34,6 +34,7 @@ let problems = [];
 let patternFamilies = [];
 let patternNames = {};
 let chosenPatterns = [];
+let availablePatternKeys = [];
 let maxPatterns = 4;
 let cheats = [];
 let isAdmin = false;
@@ -53,6 +54,10 @@ const byNumber = number => problems.find(problem => problem.number === Number(nu
 const patternName = key => patternNames[key] || key;
 const allPatterns = () => patternFamilies.flatMap(family =>
   family.patterns.map(pattern => ({ ...pattern, family: family.name })));
+const availablePatterns = () => {
+  const allowed = new Set(availablePatternKeys);
+  return allPatterns().filter(pattern => allowed.has(pattern.key));
+};
 const today = () => new Date().toISOString().slice(0, 10);
 const addDays = (date, days) => { const next = new Date(`${date}T12:00:00`); next.setDate(next.getDate() + days); return next.toISOString().slice(0, 10); };
 const dayDiff = date => Math.round((new Date(`${date}T12:00:00`) - new Date(`${today()}T12:00:00`)) / 86400000);
@@ -95,7 +100,8 @@ const fromApi = question => ({
   nextReview: question.next_review_at.slice(0, 10),
   interval: question.interval_days,
   reviewCount: question.review_count,
-  patterns: question.patterns || []
+  patterns: question.patterns || [],
+  availablePatterns: question.availablePatterns || []
 });
 
 function showError(message) {
@@ -525,7 +531,7 @@ function renderPatternResults(query = '') {
   const needle = query.trim().toLowerCase();
   const full = chosenPatterns.length >= maxPatterns;
 
-  const matches = allPatterns().filter(pattern =>
+  const matches = availablePatterns().filter(pattern =>
     !chosenPatterns.includes(pattern.key) &&
     (!needle || `${pattern.name} ${pattern.family}`.toLowerCase().includes(needle))
   ).slice(0, needle ? 40 : 12);
@@ -547,7 +553,8 @@ function renderPatternResults(query = '') {
       chosenPatterns.push(button.dataset.pattern);
       $('#pattern-search').value = '';
       renderChosenPatterns();
-      renderPatternResults();
+      $('#pattern-results').innerHTML = '';
+      $('#pattern-search').blur();
     })
   );
 }
@@ -558,6 +565,7 @@ function openAddModal() {
   editingId = null;
   selectedProblem = null;
   chosenPatterns = [];
+  availablePatternKeys = [];
   $('#add-form').reset();
   renderChosenPatterns();
   renderPatternResults();
@@ -579,6 +587,10 @@ function openEditModal(cheat) {
   $('#time-input').value = cheat.time || '';
   $('#space-input').value = cheat.space || '';
   chosenPatterns = [...(cheat.patterns || [])];
+  availablePatternKeys = [...new Set([
+    ...(cheat.availablePatterns || []),
+    ...chosenPatterns
+  ])];
   renderChosenPatterns();
   renderPatternResults();
   selectProblem(cheat.problem);
@@ -628,10 +640,15 @@ function renderProblemResults(query = '') {
 
 function selectProblem(problem) {
   selectedProblem = problem;
+  availablePatternKeys = [...new Set([
+    ...(problem.availablePatterns || []),
+    ...chosenPatterns
+  ])];
   $('#problem-search').value = `#${problem.number} ${problem.title}`;
   $('#problem-results').innerHTML = '';
   $('#selected-problem').innerHTML = `${escapeHtml(problem.title)}<span>#${problem.number} · ${problem.difficulty} · ${problem.topic}</span>`;
   $('#selected-problem').classList.remove('is-hidden');
+  renderPatternResults($('#pattern-search').value);
 }
 
 /* ---------- review ---------- */
