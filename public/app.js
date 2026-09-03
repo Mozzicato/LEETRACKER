@@ -55,6 +55,7 @@ const patternName = key => patternNames[key] || key;
 const allPatterns = () => patternFamilies.flatMap(family =>
   family.patterns.map(pattern => ({ ...pattern, family: family.name })));
 const availablePatterns = () => {
+  if (!availablePatternKeys.length) return allPatterns();
   const allowed = new Set(availablePatternKeys);
   return allPatterns().filter(pattern => allowed.has(pattern.key));
 };
