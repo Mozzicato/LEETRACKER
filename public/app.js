@@ -994,10 +994,38 @@ document.addEventListener('keydown', event => {
 
 /* ---------- boot ---------- */
 
+let loadedAt = 0;
+
 async function loadQuestions() {
   const data = await api('/api/questions');
   cheats = data.questions.map(fromApi);
+  loadedAt = Date.now();
 }
+
+/* The sheet is read once at boot and then only changed in place, so a tab left
+   sitting in the background — or one the browser discarded and quietly restored
+   when you clicked back to it — keeps showing the sheet as it was, missing
+   anything added since, on this device or another. Re-read it whenever the tab
+   comes back to the front. */
+const STALE_AFTER_MS = 30_000;
+
+async function refreshOnReturn() {
+  if (document.hidden || Date.now() - loadedAt < STALE_AFTER_MS) return;
+  /* Never pull the board out from under a half-written note. */
+  if (document.querySelector('.scrim:not(.is-hidden), .drawer-scrim:not(.is-hidden)')) return;
+
+  try {
+    await loadQuestions();
+    renderBoard();
+  } catch {
+    /* Offline, or the session ended — api() has already sent you to sign in.
+       Leave what is on screen alone and try again next time you come back. */
+  }
+}
+
+document.addEventListener('visibilitychange', refreshOnReturn);
+/* A back-forward-cache restore never re-runs start(), so it needs its own nudge. */
+window.addEventListener('pageshow', event => { if (event.persisted) refreshOnReturn(); });
 
 async function start() {
   renderLegend();
