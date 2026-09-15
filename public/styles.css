@@ -23,12 +23,12 @@
   --line-soft: #f0f0f2;
   --ink: #16181d;
   --ink-soft: #5b606b;
-  --ink-faint: #8b909b;
-  --ink-faintest: #b4b8c0;
+  --ink-faint: #6b6e77;
+  --ink-faintest: #74767c;
   --rule-faint: #c9c9cf;
   --pip-off: #e2e2e6;
   --badge-off-bg: #d7d7db;
-  --badge-off-fg: #6c707a;
+  --badge-off-fg: #5b5e67;
   --accent: #16181d;
   --urgent: #d13b26;
 
@@ -88,8 +88,8 @@
   --line-soft: #232831;
   --ink: #e6e8ee;
   --ink-soft: #a2a9b7;
-  --ink-faint: #7c8394;
-  --ink-faintest: #666d7c;
+  --ink-faint: #8a909f;
+  --ink-faintest: #7c828e;
   --rule-faint: #4a505d;
   --pip-off: #2c313c;
   --badge-off-bg: #2c313c;
@@ -150,8 +150,8 @@
   --line-soft: #232831;
   --ink: #e6e8ee;
   --ink-soft: #a2a9b7;
-  --ink-faint: #7c8394;
-  --ink-faintest: #666d7c;
+  --ink-faint: #8a909f;
+  --ink-faintest: #7c828e;
   --rule-faint: #4a505d;
   --pip-off: #2c313c;
   --badge-off-bg: #2c313c;
