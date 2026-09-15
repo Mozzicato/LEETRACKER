@@ -1002,14 +1002,20 @@ async function loadQuestions() {
   loadedAt = Date.now();
 }
 
-/* The sheet is read once at boot and then only changed in place, so a tab left
-   sitting in the background — or one the browser discarded and quietly restored
-   when you clicked back to it — keeps showing the sheet as it was, missing
-   anything added since, on this device or another. Re-read it whenever the tab
-   comes back to the front. */
-const STALE_AFTER_MS = 30_000;
+/* The sheet is read once at boot and then only changed in place, so a tab that
+   has been sitting there keeps showing the sheet as it was, missing anything
+   added since, on this device or another. Re-read it whenever you come back.
 
-async function refreshOnReturn() {
+   "Coming back" is more than the tab being reselected. visibilitychange fires
+   only when the tab is backgrounded or the window minimised — switch to another
+   app with the browser still open behind it and the tab stays "visible", so
+   nothing fires on the way back. A tab you simply walk away from fires nothing
+   either. Hence three triggers: visibility, window focus, and a slow poll that
+   covers the sheet left open in front of you. */
+const STALE_AFTER_MS = 30_000;
+const POLL_EVERY_MS = 60_000;
+
+async function refreshSheet() {
   if (document.hidden || Date.now() - loadedAt < STALE_AFTER_MS) return;
   /* Never pull the board out from under a half-written note. */
   if (document.querySelector('.scrim:not(.is-hidden), .drawer-scrim:not(.is-hidden)')) return;
@@ -1023,9 +1029,12 @@ async function refreshOnReturn() {
   }
 }
 
-document.addEventListener('visibilitychange', refreshOnReturn);
+document.addEventListener('visibilitychange', refreshSheet);
+window.addEventListener('focus', refreshSheet);
 /* A back-forward-cache restore never re-runs start(), so it needs its own nudge. */
-window.addEventListener('pageshow', event => { if (event.persisted) refreshOnReturn(); });
+window.addEventListener('pageshow', event => { if (event.persisted) refreshSheet(); });
+/* Returns early while hidden, so a backgrounded tab costs nothing. */
+setInterval(refreshSheet, POLL_EVERY_MS);
 
 async function start() {
   renderLegend();
