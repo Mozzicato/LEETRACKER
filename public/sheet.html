@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
+  <!-- Blocking on purpose: it must beat the first paint, or the white ground flashes. -->
+  <script src="/theme.js"></script>
 </head>
 <body>
   <div class="app">
@@ -42,6 +44,7 @@
         <div class="rail-account">
           <span class="rail-email" id="account-email">…</span>
           <div class="rail-links">
+            <button class="link-btn" id="theme-toggle" type="button" title="Switch between light, dark and your system setting">Theme</button>
             <button class="link-btn" id="send-feedback" type="button">Feedback</button>
             <button class="link-btn" id="sign-out" type="button">Sign out</button>
           </div>
