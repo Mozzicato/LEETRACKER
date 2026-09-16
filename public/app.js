@@ -992,6 +992,75 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape') { closeModals(); closeRankUp(); }
 });
 
+/* ---------- what is new ---------- */
+
+/* Announcements live in updates.js, newest first. The id of the newest one
+   you have seen is remembered on this device; anything above it is new. */
+const UPDATES = window.LIT_UPDATES || [];
+const SEEN_UPDATE_KEY = 'lit-seen-update';
+
+function seenUpdateId() {
+  try { return localStorage.getItem(SEEN_UPDATE_KEY); } catch { return null; }
+}
+
+function markUpdatesSeen() {
+  if (!UPDATES.length) return;
+  try { localStorage.setItem(SEEN_UPDATE_KEY, UPDATES[0].id); } catch { /* shows again next visit, no harm */ }
+}
+
+function unseenUpdates() {
+  const seen = seenUpdateId();
+  const index = UPDATES.findIndex(update => update.id === seen);
+  return index === -1 ? UPDATES : UPDATES.slice(0, index);
+}
+
+function hideWhatsNew() {
+  const banner = $('#whats-new');
+  if (banner.classList.contains('is-hidden')) return;
+  banner.classList.add('is-leaving');
+  setTimeout(() => banner.classList.add('is-hidden'), 200);
+}
+
+function showWhatsNew() {
+  if (!UPDATES.length) return;
+  /* Someone opening an empty sheet for the first time has nothing to compare
+     against, so a changelog is noise. Start them from the current update. */
+  if (seenUpdateId() === null && !cheats.length) { markUpdatesSeen(); return; }
+
+  const fresh = unseenUpdates();
+  if (!fresh.length) return;
+
+  const latest = fresh[0];
+  $('#whats-new-eyebrow').textContent = fresh.length > 1
+    ? `What’s new · ${fresh.length} updates`
+    : `What’s new · ${shortDate(latest.date)}`;
+  $('#whats-new-title').textContent = latest.title;
+  $('#whats-new-body').textContent = latest.body;
+
+  /* A beat after the sheet lands, so it arrives rather than flashes in. */
+  setTimeout(() => {
+    const banner = $('#whats-new');
+    banner.classList.remove('is-leaving');
+    banner.classList.remove('is-hidden');
+  }, 1200);
+}
+
+function openUpdates() {
+  const fresh = new Set(unseenUpdates().map(update => update.id));
+  $('#updates-list').innerHTML = UPDATES.map(update => `
+    <li>
+      <span class="updates-date">${escapeHtml(shortDate(update.date))}${fresh.has(update.id) ? '<span class="updates-new">New</span>' : ''}</span>
+      <strong>${escapeHtml(update.title)}</strong>
+      <p>${escapeHtml(update.body)}</p>
+    </li>`).join('');
+  markUpdatesSeen();
+  hideWhatsNew();
+  $('#updates-modal').classList.remove('is-hidden');
+}
+
+$('#whats-new-dismiss').addEventListener('click', () => { markUpdatesSeen(); hideWhatsNew(); });
+$('#whats-new-more').addEventListener('click', openUpdates);
+
 /* ---------- boot ---------- */
 
 let loadedAt = 0;
@@ -1058,6 +1127,7 @@ async function start() {
 
     await loadQuestions();
     renderBoard();
+    showWhatsNew();
   } catch (problem) {
     $('#board').innerHTML = '';
     showError(problem.message);

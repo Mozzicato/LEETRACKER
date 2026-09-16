@@ -184,6 +184,24 @@
     </div>
   </div>
 
+  <!-- What is new: a small corner card for anything shipped since your last visit. -->
+  <aside class="whats-new is-hidden" id="whats-new" aria-labelledby="whats-new-title">
+    <button class="whats-new-dismiss" id="whats-new-dismiss" type="button" aria-label="Dismiss">&times;</button>
+    <span class="whats-new-eyebrow" id="whats-new-eyebrow">What&rsquo;s new</span>
+    <strong class="whats-new-title" id="whats-new-title"></strong>
+    <p class="whats-new-body" id="whats-new-body"></p>
+    <button class="link-btn" id="whats-new-more" type="button">See all updates</button>
+  </aside>
+
+  <div class="scrim is-hidden" id="updates-modal" role="dialog" aria-modal="true" aria-labelledby="updates-title">
+    <div class="dialog">
+      <button class="dismiss" data-close-modal aria-label="Close">&times;</button>
+      <h2 id="updates-title">What&rsquo;s new</h2>
+      <ol class="updates-list" id="updates-list"></ol>
+    </div>
+  </div>
+
+  <script src="/updates.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

@@ -867,7 +867,10 @@ button[disabled] { opacity: .55; cursor: not-allowed; }
 
 /* ---------- feedback ---------- */
 
-.rail-links { display: flex; gap: 14px; }
+/* Three links do not fit the 208px rail on one line. Wrap whole links, never
+   mid-label, or "Sign out" breaks into two words stacked on each other. */
+.rail-links { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.rail-links .link-btn { white-space: nowrap; }
 .feedback-intro { margin: -14px 0 20px; color: var(--ink-faint); font-size: 12.5px; line-height: 1.55; }
 
 /* ---------- dashboard ---------- */
@@ -908,6 +911,40 @@ button[disabled] { opacity: .55; cursor: not-allowed; }
 
 .result-paid { color: var(--ink-faint); font: 500 9.5px var(--mono); text-transform: uppercase; letter-spacing: .06em; }
 .result-empty { margin: 0; padding: 10px 2px; color: var(--ink-faint); font-size: 12.5px; }
+
+/* ---------- what is new ---------- */
+
+/* Neutral on purpose: colour on this sheet belongs to the mastery ladder. It
+   sits under the dialogs (20) and the drawer (25) so it never covers one. */
+.whats-new {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 15;
+  width: min(340px, calc(100vw - 48px));
+  padding: 14px 40px 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 18px 40px -20px var(--shadow-mid);
+  animation: whats-new-in .3s cubic-bezier(.16, 1, .3, 1);
+}
+.whats-new.is-leaving { opacity: 0; transform: translateY(8px); transition: opacity .2s ease, transform .2s ease; }
+@keyframes whats-new-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.whats-new-eyebrow { display: block; color: var(--ink-faint); font: 600 9.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.whats-new-title { display: block; margin: 4px 0 3px; color: var(--ink); font: 600 14px/1.35 var(--ui); }
+.whats-new-body { margin: 0 0 10px; color: var(--ink-soft); font: 400 12.5px/1.5 var(--ui); }
+.whats-new-dismiss { position: absolute; top: 8px; right: 10px; border: 0; background: none; padding: 2px 6px; color: var(--ink-faint); font-size: 18px; line-height: 1; cursor: pointer; }
+.whats-new-dismiss:hover { color: var(--ink); }
+
+.updates-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.updates-list li { padding: 14px 0; border-top: 1px solid var(--line-soft); }
+.updates-list li:first-child { padding-top: 0; border-top: 0; }
+.updates-date { display: flex; align-items: center; gap: 8px; color: var(--ink-faint); font: 500 10.5px var(--mono); letter-spacing: .04em; }
+.updates-new { padding: 1px 6px; border-radius: 99px; background: var(--ink); color: var(--on-ink); font: 600 9px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.updates-list strong { display: block; margin: 4px 0 3px; font: 600 14.5px var(--ui); }
+.updates-list p { margin: 0; color: var(--ink-soft); font: 400 13px/1.55 var(--ui); }
 
 /* ==========================================================================
    RESPONSIVE — kept last on purpose. These rules override the ones above, so
@@ -1038,6 +1075,7 @@ button[disabled] { opacity: .55; cursor: not-allowed; }
   .note-head { gap: 4px; }
   .note-who { font-size: 12px; word-break: break-word; }
 
+  .whats-new { left: 16px; right: 16px; bottom: 16px; width: auto; }
   .toasts { left: 16px; right: 16px; bottom: 16px; transform: none; }
   .toast { text-align: center; }
 }
