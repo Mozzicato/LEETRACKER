@@ -462,8 +462,11 @@ button { font-family: inherit; }
 
 /* ---------- ladder pips ---------- */
 
-.pips { display: inline-flex; gap: 3px; align-items: center; }
-.pip-step { width: 12px; height: 4px; border-radius: 2px; background: var(--pip-off); }
+.pips { display: inline-flex; gap: 3px; align-items: center; max-width: 100%; }
+/* Pips shrink rather than overflow. The state column gives them about 100px of
+   content, which eight 12px pips exceed; they keep full size wherever there is
+   room and squeeze only where there is not. */
+.pip-step { flex: 0 1 12px; width: 12px; min-width: 5px; height: 4px; border-radius: 2px; background: var(--pip-off); }
 .pip-step.is-on { background: var(--c, var(--ink)); }
 .pip-step.is-on.is-vault { background: var(--gold); }
 
@@ -631,7 +634,10 @@ button { font-family: inherit; }
 .detail-sub { margin: 0 0 22px; color: var(--ink-faint); font-size: 12.5px; }
 
 .detail-ladder { border: 1px solid var(--line); border-radius: 10px; padding: 14px 15px; margin-bottom: 22px; }
-.detail-ladder-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 10px; font: 500 10.5px var(--mono); color: var(--ink-faint); letter-spacing: .04em; }
+/* Eight rungs no longer fit beside the label, so let the day list drop to its
+   own line rather than breaking "Mastery ladder" in half. */
+.detail-ladder-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin-bottom: 10px; font: 500 10.5px var(--mono); color: var(--ink-faint); letter-spacing: .04em; }
+.detail-ladder-head span:first-child { white-space: nowrap; }
 .detail-ladder .pips { display: flex; gap: 5px; }
 .detail-ladder .pip-step { flex: 1; height: 7px; border-radius: 3px; }
 .detail-ladder-note { margin: 10px 0 0; font-size: 12px; color: var(--ink-soft); }

@@ -11,6 +11,12 @@
 
 window.LIT_UPDATES = [
   {
+    id: '2026-09-28-longer-ladder',
+    date: '2026-09-28',
+    title: 'A longer mastery ladder',
+    body: 'Reviews now step 1 day, 3 days, then 1, 2, 3, 5, 8 and 13 weeks before a problem vaults. The old jump from 7 days straight to 30 was where things got forgotten. Problems already on the ladder keep their place.'
+  },
+  {
     id: '2026-09-15-dark-mode',
     date: '2026-09-15',
     title: 'Dark mode',

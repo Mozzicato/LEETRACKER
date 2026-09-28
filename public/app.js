@@ -1,7 +1,7 @@
 /* Lit-Sheet. Questions live in Neon; this file talks to the API in api(). */
 
 /* The mastery ladder. Clear it and the problem is vaulted. */
-const LADDER = [1, 3, 7, 30, 90];
+let LADDER = [1, 3, 7, 14, 21, 35, 56, 91];
 
 /* One direct progression, best to worst. */
 const SCALE = [
@@ -120,12 +120,16 @@ const isBruteForce = cheat => (cheat.patterns || []).includes(BRUTE_FORCE);
 
 function decay(cheat) {
   const late = -dayDiff(cheat.nextReview);
-  const rung = Math.max(0, LADDER.indexOf(cheat.interval));
+  const rung = rungOf(cheat);
+  const top = LADDER.length - 1;
 
   if (late < 0) {
-    if (rung >= LADDER.length - 1) return 'vault';
-    if (rung >= 3) return 'mastered';
-    if (rung >= 2) return 'strong';
+    if (rung >= top) return 'vault';
+    /* Spread the on-time greens across however many rungs the ladder has.
+       Hardcoding "rung >= 3" collapsed the whole middle of a longer ladder
+       into one colour; as thirds, 5 rungs land exactly where they used to. */
+    if (rung >= Math.ceil(top * 2 / 3)) return 'mastered';
+    if (rung >= Math.ceil(top / 3)) return 'strong';
     return 'steady';
   }
   if (late === 0) return 'slipping';
@@ -155,7 +159,13 @@ function stateLine(cheat) {
 
 const needsPractice = cheat => dayDiff(cheat.nextReview) <= 0 || isBruteForce(cheat);
 const labelFor = status => SCALE.find(step => step.key === status).label;
-const rungOf = cheat => Math.max(0, LADDER.indexOf(cheat.interval));
+const rungOf = cheat => {
+  let best = 0;
+  for (let index = 1; index < LADDER.length; index++) {
+    if (Math.abs(LADDER[index] - cheat.interval) < Math.abs(LADDER[best] - cheat.interval)) best = index;
+  }
+  return best;
+};
 
 /* The techniques used, as chips. */
 function patternTags(cheat, { empty = true } = {}) {
@@ -1117,6 +1127,7 @@ async function start() {
     $('#account-email').title = me.user.email;
     isAdmin = Boolean(me.user.isAdmin);
     $('#admin-nav').classList.toggle('is-hidden', !isAdmin);
+    if (catalogue.ladder?.length) LADDER = catalogue.ladder;
     patternFamilies = catalogue.patternFamilies || [];
     maxPatterns = catalogue.maxPatterns || 4;
     patternNames = Object.fromEntries(allPatterns().map(pattern => [pattern.key, pattern.name]));

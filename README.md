@@ -8,9 +8,17 @@ ask you about it again — before you forget it.
 
 ## The idea
 
-Every problem climbs a **mastery ladder**: `1 → 3 → 7 → 30 → 90` days. Remember
-it and you move up a rung; struggle and you drop one; forget and you go back to
-the bottom. Clear the top rung and the problem is **vaulted**.
+Every problem climbs a **mastery ladder**, in days:
+
+```
+1 → 3 → 7 → 14 → 21 → 35 → 56 → 91
+      └─ 1 day, 3 days, then 1, 2, 3, 5, 8, 13 weeks ─┘
+```
+
+Fibonacci in weeks, so each gap is about 1.6× the one before it. Remember a
+problem and you move up a rung; struggle and you drop one; forget and you go
+back to the bottom. Clear the top rung and the problem is **vaulted** — about
+eight months of not forgetting it.
 
 Colour carries that state, so the sheet is readable at a glance:
 
