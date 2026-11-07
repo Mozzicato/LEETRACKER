@@ -3,6 +3,11 @@
 /* The mastery ladder. Clear it and the problem is vaulted. */
 let LADDER = [1, 3, 7, 14, 21, 35, 56, 91];
 
+/* Mode points a question holds on each rung, steeper towards the top so the
+   long intervals are worth chasing. If the ladder grows past this, extra rungs
+   score as the last entry. */
+const RUNG_POINTS = [0, 1, 2, 4, 6, 9, 13, 18];
+
 /* One direct progression, best to worst. */
 const SCALE = [
   { key: 'vault', label: 'Vaulted' },
@@ -194,12 +199,25 @@ function practice() {
   const vaulted = cheats.filter(cheat => health(cheat) === 'vault').length;
   const abandoned = cheats.filter(cheat => health(cheat) === 'abandoned').length;
   const recent = cheats.filter(cheat => -dayDiff(cheat.solvedAt) <= 30).length;
+  const patterns = new Set(cheats.flatMap(cheat => cheat.patterns || []).filter(key => key !== BRUTE_FORCE)).size;
+
+  /* What you actually remember: each question earns for the rung it holds now,
+     so forgetting one gives the points back. Raw review count is deliberately
+     not scored, since a "forgot" press counted the same as a "remembered" one
+     and mashing the queue outranked knowing things. Abandoned and brute-force
+     questions hold nothing. */
+  const ladder = cheats.reduce((total, cheat) => {
+    const status = health(cheat);
+    if (status === 'abandoned' || isBruteForce(cheat)) return total;
+    return total + (RUNG_POINTS[rungOf(cheat)] ?? RUNG_POINTS[RUNG_POINTS.length - 1]);
+  }, 0);
 
   const points = Math.max(0,
-    solved * 2 +      // writing them down
-    reviews * 3 +     // coming back to them
-    recent * 4 +      // keeping up the pace
-    vaulted * 15 -    // getting them locked in
+    solved * 3 +      // how many you've solved and written down
+    patterns * 6 +    // how many distinct patterns you've covered
+    recent * 3 +      // keeping up the pace
+    ladder +          // how far up the ladder they've climbed
+    vaulted * 30 -    // getting them locked in for good
     abandoned * 8     // letting them rot
   );
 
@@ -207,7 +225,7 @@ function practice() {
   const rank = RANKS[index];
   const next = RANKS[index + 1] || null;
 
-  return { solved, reviews, vaulted, abandoned, recent, points, rank, next, index };
+  return { solved, reviews, patterns, vaulted, abandoned, recent, ladder, points, rank, next, index };
 }
 
 function renderMode() {

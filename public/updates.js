@@ -11,6 +11,12 @@
 
 window.LIT_UPDATES = [
   {
+    id: '2026-11-07-fairer-modes',
+    date: '2026-11-07',
+    title: 'Modes now measure what you know',
+    body: 'Your mode now comes from how many problems you have solved, how many patterns they cover and how high each one sits on the ladder, not from how many times you pressed review. Most modes have moved down; climb the ladder to earn them back.'
+  },
+  {
     id: '2026-09-28-longer-ladder',
     date: '2026-09-28',
     title: 'A longer mastery ladder',
