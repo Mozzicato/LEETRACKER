@@ -1137,9 +1137,12 @@ async function start() {
   renderLegend();
 
   try {
+    /* All three at once: on a slow link each sequential request is another
+       full round trip before the sheet can draw. */
     const [me, catalogue] = await Promise.all([
       api('/api/auth/me'),
-      api('/api/problems')
+      api('/api/problems'),
+      loadQuestions()
     ]);
     $('#account-email').textContent = me.user.email;
     $('#account-email').title = me.user.email;
@@ -1154,7 +1157,6 @@ async function start() {
       $('#problem-search').placeholder = `Search all ${catalogue.problemCount.toLocaleString()} LeetCode problems`;
     }
 
-    await loadQuestions();
     renderBoard();
     showWhatsNew();
   } catch (problem) {
